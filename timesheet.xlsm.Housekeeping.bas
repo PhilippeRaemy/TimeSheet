@@ -9,7 +9,7 @@ Const TaskButtonName = "TaskButton_"
     For Each sh In InputSheet.Shapes
         Debug.Print sh.Name, TypeName(sh), sh.OnAction
         If sh.Name Like "Button*" And Not sh.OnAction Like "'*'" Then sh.Delete
-        If sh.Name Like "TaskButton*" And sh.OnAction Like "'*'" Then
+        If (sh.Name Like "TaskButton*" Or sh.Name Like "Button*") And sh.OnAction Like "'*'" Then
             targetAddress = Split(sh.OnAction, """")(1)
             Set Target = InputSheet.Range(targetAddress)
             Set positionTarget = InputSheet.Cells(Target.row, Target.Column + 1)

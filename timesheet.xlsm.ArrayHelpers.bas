@@ -220,11 +220,11 @@ Proc:
   If tmpLow < Hi Then QuickSort arr, tmpLow, Hi
 End Sub
 
-Public Function ArrayContains(a As Variant, Value As Variant) As Boolean
+Public Function ArrayContains(a As Variant, value As Variant) As Boolean
     If Not IsArray(a) Then Exit Function
     Dim v As Variant
     For Each v In a
-        If v = Value Then
+        If v = value Then
             ArrayContains = True
             Exit Function
         End If

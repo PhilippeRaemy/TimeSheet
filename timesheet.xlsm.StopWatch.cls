@@ -10,8 +10,8 @@ Attribute VB_Exposed = False
 Private Name As String
 Private StartTime As Date
 
-Public Function SetName(Value As String) As Stopwatch
-    Name = Value
+Public Function SetName(value As String) As StopWatch
+    Name = value
 End Function
 
 Private Sub Class_Initialize()

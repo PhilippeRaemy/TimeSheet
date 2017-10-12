@@ -21,10 +21,11 @@ Sub CmdTask(TaskName As Range)
         sel.Font.Color = TaskName.Font.Color
     End If
     For r = 1 To sel.Rows.Count
-        sel.Cells(r, 1).Value = sel.Cells(r, 1).Value
+        sel.Cells(r, 1).value = sel.Cells(r, 1).value
     Next r
     Application.Calculation = xlCalculationAutomatic
     PivotSheet.PivotTables("WeeklyAggregates").PivotCache.Refresh
+    PivotSheet.PivotTables("MonthlyAggregates").PivotCache.Refresh
     Application.ScreenUpdating = True
 End Sub
 
@@ -32,7 +33,7 @@ Sub SetSummaries(Target As Range)
 Dim DayDate As Date
     If Not RangeRelation(InputSheet.Range("InputRange"), Target) = "Including" Then Exit Sub
     
-    DayDate = InputSheet.Range("Dates").Cells(Target.row - InputSheet.Range("Dates").row + 1, 1).Value
+    DayDate = InputSheet.Range("Dates").Cells(Target.row - InputSheet.Range("Dates").row + 1, 1).value
     
     Dim SummaryWeek As Date:    SummaryWeek = DateAdd("d", 1 - DatePart("w", DayDate, vbMonday), DayDate)
     Dim SummaryMonth As Date:   SummaryMonth = DateAdd("d", 1 - Day(DayDate), DayDate)
@@ -42,10 +43,10 @@ Dim DayDate As Date
     SetSummary SummaryWeek, "SummaryWeek", "PieChartWeekly"
     SetSummary SummaryMonth, "SummaryMonth", "PieChartMonthly"
 End Sub
-Sub SetSummary(Value As Variant, RangeName As String, PieChartName As String)
-    If InputSheet.Range(RangeName).Value <> Value Then
+Sub SetSummary(value As Variant, RangeName As String, PieChartName As String)
+    If InputSheet.Range(RangeName).value <> value Then
         ' Debug.Print "SetSummary:" & RangeName, PieChartName, value
-        InputSheet.Range(RangeName).Value = Value
+        InputSheet.Range(RangeName).value = value
         If PieChartName <> "" Then FormatPieChartByName PieChartName
         If PieChartName = "SummaryMonth" Then
             FormatPieChartByName "SummaryYear"
@@ -159,16 +160,16 @@ Dim c As Integer
     End If
 End Function
 
-Public Function TaskList(DataRange As Range, PeriodRange As Range, PeriodValue As Variant, CategoryReferences As Range, Title As String) As Variant
-    Dim a As Variant, b As Variant, i As Integer
-    a = Split(TextReport(DataRange, PeriodRange, PeriodValue, CategoryReferences, Title, DatesRange:=Nothing, AsArray:=True), "|")
-    b = Array()
-    ReDim b(UBound(a), 0)
-    For i = 0 To UBound(a)
-        b(i, 0) = a(i)
-    Next i
-    TaskList = b
-End Function
+'Public Function TaskList(DataRange As Range, PeriodRange As Range, PeriodValue As Variant, CategoryReferences As Range, Title As String) As Variant
+'    Dim a As Variant, b As Variant, i As Integer
+'    a = Split(TextReport(DataRange, PeriodRange, PeriodValue, CategoryReferences, Title, DatesRange:=Nothing, AsArray:=True), "|")
+'    b = Array()
+'    ReDim b(UBound(a), 0)
+'    For i = 0 To UBound(a)
+'        b(i, 0) = a(i)
+'    Next i
+'    TaskList = b
+'End Function
 
 Public Function TextReport( _
     DataRange As Range, _
@@ -176,6 +177,7 @@ Public Function TextReport( _
     PeriodValue As Variant, _
     CategoryReferences As Range, _
     Title As String, _
+    TimePerDay As Single, _
     Optional WithDateRangeBounds As Boolean = False, _
     Optional DatesRange As Range = Nothing, _
     Optional AsArray As Boolean = False, _
@@ -203,19 +205,20 @@ Proc:
     Set ColorDic = New Scripting.Dictionary
     Set GlobalTaskTime = New TaskTime
     GlobalTaskTime.TaskName = Title
+    GlobalTaskTime.TimePerDay = TimePerDay
     For Each CatCell In CategoryReferences
-      ColorDic.Add CatCell.Interior.Color, CatCell.Value
+      ColorDic.Add CatCell.Interior.Color, CatCell.value
     Next CatCell
     For r = 1 To PeriodRange.Rows.Count
-        If PeriodRange.Cells(r, 1).Value = PeriodValue Then
+        If PeriodRange.Cells(r, 1).value = PeriodValue Then
             For c = 1 To DataRange.Columns.Count
                 Set DataCell = DataRange.Cells(r, c)
                 Color = DataCell.Interior.Color
                 If ColorDic.Exists(Color) Then
                     If DatesRange Is Nothing Then
-                        GlobalTaskTime.Increment SubTaskName:=ColorDic(Color), SubSubTaskName:=DataCell.Value, RecurseLevels:=RecurseLevels, ByWeekDay:=ByWeekDay
+                        GlobalTaskTime.Increment SubTaskName:=ColorDic(Color), SubSubTaskName:=DataCell.value, RecurseLevels:=RecurseLevels, ByWeekDay:=ByWeekDay
                     Else
-                        GlobalTaskTime.Increment SubTaskName:=ColorDic(Color), SubSubTaskName:=DataCell.Value, RecurseLevels:=RecurseLevels, ByWeekDay:=ByWeekDay, TTime:=DatesRange.Cells(r, 1).Value, WithDateRangeBounds:=WithDateRangeBounds
+                        GlobalTaskTime.Increment SubTaskName:=ColorDic(Color), SubSubTaskName:=DataCell.value, RecurseLevels:=RecurseLevels, ByWeekDay:=ByWeekDay, TTime:=DatesRange.Cells(r, 1).value, WithDateRangeBounds:=WithDateRangeBounds
                     End If
                 End If
             Next c

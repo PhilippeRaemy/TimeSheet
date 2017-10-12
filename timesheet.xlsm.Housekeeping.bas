@@ -69,6 +69,7 @@ Dim ChartHeaderRange As Range
                 If cell.Interior.Color = 16777215 Then
                     sp.Format.Fill.Visible = msoFalse
                 Else
+                    sp.Format.Fill.Visible = msoTrue
                     sp.Format.Fill.ForeColor.RGB = cell.Interior.Color
                     sp.Format.line.ForeColor.RGB = cell.Interior.Color
                 End If
@@ -103,9 +104,14 @@ Dim ChartHeaderRange As Range
     Application.Calculation = xlCalculationAutomatic
 End Sub
 
-Sub ResetPivot()
+Sub ResetPivots()
+    ResetPivot "WeeklyAggregates"
+    ResetPivot "MonthlyAggregates"
+End Sub
+
+Sub ResetPivot(pivotName As String)
 Dim pivot As PivotTable, pField As PivotField, pFields As PivotFields
-Set pivot = PivotSheet.PivotTables("WeeklyAggregates")
+Set pivot = PivotSheet.PivotTables(pivotName)
 Set pFields = pivot.PivotFields
 Dim space As String
     
@@ -158,7 +164,7 @@ Sub resetWeeklyChartColors()
             For Each ser In Chart.Chart.SeriesCollection
                 Debug.Print Chart.Name, ser.Name,
                 For Each TaskRefCell In TaskRefRange.Columns(2).Cells
-                    If Trim(TaskRefCell.Value) = Trim(ser.Name) Then
+                    If Trim(TaskRefCell.value) = Trim(ser.Name) Then
                         Debug.Print TaskRefCell.Interior.Color,
                         ser.Format.Fill.ForeColor.RGB = TaskRefCell.Interior.Color
                     End If

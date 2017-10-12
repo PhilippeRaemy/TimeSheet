@@ -1,5 +1,6 @@
 #temporary office files
 ~$*.*
 
-#production timesheet
-timesheet.xlsm
+#production timesheet & copies
+timesheet*.xlsm
+timesheet*.xlsm.unzipped/

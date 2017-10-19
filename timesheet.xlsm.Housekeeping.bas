@@ -32,18 +32,18 @@ Const TaskButtonName = "TaskButton_"
   
 End Sub
 Sub ResetColors()
-Dim cell As Range, r As Integer
+Dim Cell As Range, r As Integer
 Dim trg As Range, trgName As Variant
 Dim ch As ChartObject, sc As Series, sp As Point
 Dim ChartHeaderRangeAddress As String
 Dim ChartHeaderRange As Range
     Application.Calculation = xlCalculationManual
     For r = 1 To InputSheet.Range("TasksRef").Rows.Count
-        Set cell = InputSheet.Range("TasksRef").Cells(r, 1)
+        Set Cell = InputSheet.Range("TasksRef").Cells(r, 1)
         For Each trgName In Array("DailyTotals", "DailyTotalsForPivot")
             Set trg = ActiveWorkbook.Names(trgName).RefersToRange
             ' trg.Cells(1, r).Value = cell.Value
-            trg.Columns(r).Interior.Color = cell.Interior.Color
+            trg.Columns(r).Interior.Color = Cell.Interior.Color
         Next trgName
     Next r
     For Each ch In InputSheet.ChartObjects
@@ -63,17 +63,17 @@ Dim ChartHeaderRange As Range
             ChartHeaderRangeAddress = Split(sc.Formula, ",")(1)
             Set ChartHeaderRange = ActiveWorkbook.Worksheets(Split(ChartHeaderRangeAddress, "!")(0)).Range(Split(ChartHeaderRangeAddress, "!")(1))
             r = 0
-            For Each cell In ChartHeaderRange.Rows(1).Cells
+            For Each Cell In ChartHeaderRange.Rows(1).Cells
                 r = r + 1
                 Set sp = sc.Points(r)
-                If cell.Interior.Color = 16777215 Then
+                If Cell.Interior.Color = 16777215 Then
                     sp.Format.Fill.Visible = msoFalse
                 Else
                     sp.Format.Fill.Visible = msoTrue
-                    sp.Format.Fill.ForeColor.RGB = cell.Interior.Color
-                    sp.Format.line.ForeColor.RGB = cell.Interior.Color
+                    sp.Format.Fill.ForeColor.RGB = Cell.Interior.Color
+                    sp.Format.line.ForeColor.RGB = Cell.Interior.Color
                 End If
-            Next cell
+            Next Cell
         Else
             For Each sc In ch.Chart.SeriesCollection
                 On Error Resume Next
@@ -181,18 +181,18 @@ Sub resetWeeklyChartColors()
   
 End Sub
 Sub SetComments()
-Dim cell As Range
-    For Each cell In Selection
+Dim Cell As Range
+    For Each Cell In Selection
         On Error Resume Next
-        cell.AddComment
-        cell.Comment.Visible = False
-        cell.Comment.Shape.TextFrame.Characters.Font.Bold = False
-        cell.Comment.Shape.TextFrame.Characters.Font.Size = 8
-        cell.Comment.Shape.TextFrame.Characters.Font.Name = "Monofur"
-        cell.Comment.Shape.Width = 100
-        cell.Comment.Shape.Height = 12
-        cell.Comment.text text:="Dblclick for summary"
-    Next cell
+        Cell.AddComment
+        Cell.Comment.Visible = False
+        Cell.Comment.Shape.TextFrame.Characters.Font.Bold = False
+        Cell.Comment.Shape.TextFrame.Characters.Font.Size = 8
+        Cell.Comment.Shape.TextFrame.Characters.Font.Name = "Monofur"
+        Cell.Comment.Shape.Width = 100
+        Cell.Comment.Shape.Height = 12
+        Cell.Comment.text text:="Dblclick for summary"
+    Next Cell
 End Sub
 
 Sub SetCommentsFormat()

@@ -16,11 +16,11 @@ Public Property Get StartTick(TickDuration As Single) As Integer
 End Property
 
 Public Property Get EndTick(TickDuration As Single) As Integer
-    EndTick = Tick(EndTime, TickDuration)
+    EndTick = Tick(EndTime, TickDuration) - 1
 End Property
 
 Private Function Tick(datetime As Date, TickDuration As Single) As Integer
-    Tick = Int((datetime - Int(datetime)) * 24 / TickDuration)
+    Tick = 1 + Round((datetime - Int(datetime)) * 24 / TickDuration)
 End Function
 
 Public Function ToString() As String

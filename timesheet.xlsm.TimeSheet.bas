@@ -1,20 +1,20 @@
 Attribute VB_Name = "TimeSheet"
 Option Explicit
 Sub CmdTask(TaskName As Range)
-    Dim sel As Range, cell As Range, r As Integer
+    Dim sel As Range, Cell As Range, r As Integer
     Dim ClearedColor  As Long
     ClearedColor = TaskName.Worksheet.Range("ClearTaskref").Interior.Color
     Application.Calculation = xlCalculationManual
     Application.ScreenUpdating = False
     Set sel = Application.Selection
     If sel.Cells(1, 1).Interior.Color = ClearedColor And Not TaskName.Interior.Color = ClearedColor Then ' only fill-in gaps in the selection
-        For Each cell In sel.Cells
-            If cell.Interior.Color = ClearedColor Then
-                cell.Interior.Color = TaskName.Interior.Color
-                cell.Interior.Pattern = TaskName.Interior.Pattern
-                cell.Font.Color = TaskName.Font.Color
+        For Each Cell In sel.Cells
+            If Cell.Interior.Color = ClearedColor Then
+                Cell.Interior.Color = TaskName.Interior.Color
+                Cell.Interior.Pattern = TaskName.Interior.Pattern
+                Cell.Font.Color = TaskName.Font.Color
             End If
-        Next cell
+        Next Cell
     Else ' override whatever is selected
         sel.Interior.Color = TaskName.Interior.Color
         sel.Interior.Pattern = TaskName.Interior.Pattern
@@ -36,7 +36,7 @@ Dim DayDate As Date
     DayDate = InputSheet.Range("Dates").Cells(Target.row - InputSheet.Range("Dates").row + 1, 1).value
     
     Dim SummaryWeek As Date:    SummaryWeek = DateAdd("d", 1 - DatePart("w", DayDate, vbMonday), DayDate)
-    Dim SummaryMonth As Date:   SummaryMonth = DateAdd("d", 1 - Day(DayDate), DayDate)
+    Dim SummaryMonth As Date:   SummaryMonth = DateAdd("d", 1 - day(DayDate), DayDate)
     Dim SummaryYear As Integer: SummaryYear = Year(DayDate)
     ' check values before to apply to save triggering unnecessary recalculation
     SetSummary DayDate, "SummaryDay", ""
@@ -130,10 +130,10 @@ Sub FormatPieChart(pieChart As Chart)
 End Sub
 
 Public Function CountColored(r As Range, ref As Range)
-Dim cell As Range
-    For Each cell In r
-        If cell.Interior.Color = ref.Interior.Color Then CountColored = CountColored + 1
-    Next cell
+Dim Cell As Range
+    For Each Cell In r
+        If Cell.Interior.Color = ref.Interior.Color Then CountColored = CountColored + 1
+    Next Cell
 End Function
 Public Function TimeRanges(r As Range, NoWorkRef As Range) As String
 Dim NoWorkColor As Long
@@ -282,3 +282,40 @@ Function IntervalRelation(x1 As Long, x2 As Long, y1 As Long, y2 As Long) As Str
         IntervalRelation = "Overlapping"
     End If
 End Function
+
+Sub ButtonImportAppointments_Click()
+    ImportAppointments InputSheet.Range("SummaryDay").value
+End Sub
+
+Public Sub ImportAppointments(day As Date)
+    Dim appts() As Appointment
+    Dim appt As Appointment
+    Dim vappt As Variant 'Appointment
+    Dim InputRange As Range
+    Set InputRange = InputSheet.Range("InputRange")
+    Dim StartCell As Range
+    Dim EndCell As Range
+    Dim Cell As Range
+    Dim TaskCell As Range
+    
+    If Not RangeRelation(InputRange, Selection) = "Including" Then Exit Sub
+    
+    appts = OutlookAccess.FindAppts(day, day + 1)
+    For Each vappt In appts
+        Set appt = vappt
+        Set StartCell = InputRange.Cells(1 + Selection.row - InputRange.row, appt.StartTick(1 / 4))
+        Set EndCell = InputRange.Cells(1 + Selection.row - InputRange.row, appt.EndTick(1 / 4))
+        If IsEmpty(StartCell.value) Then StartCell.value = appt.Subject
+        InputSheet.Range(StartCell, EndCell).Select
+        Set TaskCell = InputSheet.Range("DefaultAdminPattern")
+        For Each Cell In InputSheet.Range("TasksRefFullRange")
+            If InStr(1, appt.Subject, Cell.value, vbTextCompare) <> 0 Then
+                Set TaskCell = Cell
+                Exit For
+            End If
+        Next Cell
+        CmdTask TaskCell
+        Debug.Print appt.ToString(), appt.StartTick(1 / 4), appt.EndTick(1 / 4)
+    Next
+
+End Sub

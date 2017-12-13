@@ -169,13 +169,19 @@ Private Function FormatTimeInDay(tm As Single) As String
     ElseIf tm = -1 Then
         FormatTimeInDay = String(6, Chr_Horiz) ' "------"
     Else
-        If (Int(tm / pTimePerDay)) > 0 Then
-            FormatTimeInDay = Right("  " & Format(Int(tm / pTimePerDay), "#0"), 3)
+        Dim fullDays As Integer: fullDays = Int(tm / pTimePerDay)
+        If fullDays > 0 Then
+            FormatTimeInDay = Right("  " & Format(fullDays, "#0"), 3)
         Else
             FormatTimeInDay = "   "
         End If
         Select Case tm / pTimePerDay - Int(tm / pTimePerDay)
-            Case Is < 1 / 16: FormatTimeInDay = FormatTimeInDay & " d"
+            Case Is < 1 / 8:
+                If fullDays > 0 Then
+                    FormatTimeInDay = FormatTimeInDay & " d"
+                Else
+                    FormatTimeInDay = "  <1h"
+                End If
             Case Is < 3 / 16: FormatTimeInDay = FormatTimeInDay & ChrW(&H215B) & "d"
             Case Is < 5 / 16: FormatTimeInDay = FormatTimeInDay & ChrW(&HBC) & "d"
             Case Is < 7 / 16: FormatTimeInDay = FormatTimeInDay & ChrW(&H215C) & "d"

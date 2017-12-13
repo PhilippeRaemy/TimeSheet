@@ -12,7 +12,7 @@ Const TaskButtonName = "TaskButton_"
         If (sh.Name Like "TaskButton*" Or sh.Name Like "Button*") And sh.OnAction Like "'*'" Then
             targetAddress = Split(sh.OnAction, """")(1)
             Set Target = InputSheet.Range(targetAddress)
-            Set positionTarget = InputSheet.Cells(Target.row, Target.Column + 1)
+            Set positionTarget = InputSheet.Cells(Target.Row, Target.Column + 1)
             If Not sh.Name = TaskButtonName & targetAddress Then
               sh.Name = TaskButtonName & targetAddress
             End If
@@ -110,12 +110,12 @@ Sub ResetPivots()
 End Sub
 
 Sub ResetPivot(pivotName As String)
-Dim pivot As PivotTable, pField As PivotField, pFields As PivotFields
-Set pivot = PivotSheet.PivotTables(pivotName)
-Set pFields = pivot.PivotFields
+Dim Pivot As PivotTable, pField As PivotField, pFields As PivotFields
+Set Pivot = PivotSheet.PivotTables(pivotName)
+Set pFields = Pivot.PivotFields
 Dim space As String
     
-    Debug.Print pivot.PivotFields.Count
+    Debug.Print Pivot.PivotFields.Count
     Application.Calculation = xlCalculationManual
     For Each pField In pFields
         Debug.Print pField.Name, pField.Caption, pField.Orientation

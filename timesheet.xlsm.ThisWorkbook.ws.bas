@@ -13,11 +13,11 @@ Private Sub Workbook_Activate()
 End Sub
 
 Public Sub GoNow()
-Dim row As Integer, col As Integer
-    row = Int(Now - InputSheet.Range("Dates").Cells(1, 1).value)
-    If row < 0 Then Exit Sub
-    col = 2 + Int((Now - Int(Now)) * 24 * 4)
+Dim Row As Integer, col As Integer
+    Row = Int(Now - InputSheet.Range("Dates").Cells(1, 1).value)
+    If Row < 0 Then Exit Sub
+    col = 3 + Int((Now - Int(Now)) * 24 * 4)
     On Error Resume Next
     InputSheet.Select
-    InputSheet.Cells(InputSheet.Range("Dates").row + row, col).Select
+    InputSheet.Cells(InputSheet.Range("Dates").Row + Row, col).Select
 End Sub

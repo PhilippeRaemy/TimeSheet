@@ -55,16 +55,16 @@ End Select
 End Function
 
 Public Function FlattenArray(ParamArray Parms() As Variant) As Variant
-Dim a As Variant, i As Integer, P As Integer, Pp As Integer
+Dim a As Variant, i As Integer, p As Integer, Pp As Integer
 Dim b As Variant, Pa As Variant
     Pa = Parms
     While LBound(Pa) = UBound(Pa)
         Pa = Pa(UBound(Pa))
     Wend
     a = Array()
-    For P = LBound(Pa) To UBound(Pa)
-        If IsArray(Pa(P)) Then
-            b = FlattenArray(Pa(P))
+    For p = LBound(Pa) To UBound(Pa)
+        If IsArray(Pa(p)) Then
+            b = FlattenArray(Pa(p))
             ReDim Preserve a(i + UBound(b) - UBound(b) + 1)
             For Pp = LBound(b) To UBound(b)
                 a(i) = b(Pp)
@@ -72,10 +72,10 @@ Dim b As Variant, Pa As Variant
             Next Pp
         Else
             ReDim Preserve a(i)
-            a(i) = Pa(P)
+            a(i) = Pa(p)
             i = i + 1
         End If
-    Next P
+    Next p
     FlattenArray = a
 End Function
 

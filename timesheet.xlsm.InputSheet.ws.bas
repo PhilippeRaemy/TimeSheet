@@ -37,6 +37,10 @@ Dim Day_ As Date:    Day_ = Range("SummaryDay").value
             report = TextReport(InputRng, WeeksRng, Week, Range("Tasksref"), "Week " & Range("SummaryWeek").value, -1, OrderBy:="Name", DatesRange:=Range("Dates"), ByWeekDay:=True, RecurseLevels:=2) & vbCrLf
         Case Range("DayTag").Address
             ThisWorkbook.GoNow
+        Case Range("WorkWeek").Address
+            report = WorkReport("WeeklyAggregates", "yyyy-ww (mmm-dd)", "Hol", "*")
+        Case Range("WorkMonth").Address
+            report = WorkReport("MonthlyAggregates", "mmm-yy", "Hol", "*")
         Case Else
              If RangeRelation(Target, Range("TasksRefFullRange")) = "Included" Then
                 report = TextReport(InputRng, YearsRng, Year, Target, Target.value, DayDueTime, WithDateRangeBounds:=True, DatesRange:=Range("Dates"), OrderBy:="Date")
@@ -54,7 +58,7 @@ End Sub
 
 Private Sub Worksheet_SelectionChange(ByVal Target As Range)
     Static selectedRow As Long
-    If selectedRow = Target.row Then Exit Sub
-    selectedRow = Target.row
+    If selectedRow = Target.Row Then Exit Sub
+    selectedRow = Target.Row
     TimeSheet.SetSummaries Target
 End Sub

@@ -4,3 +4,7 @@
 #production timesheet & copies
 timesheet*.xlsm
 timesheet*.xlsm.unzipped/
+
+#other timesheets
+*.xlsx
+*.docx

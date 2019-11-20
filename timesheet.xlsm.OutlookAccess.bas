@@ -14,31 +14,20 @@ Function FindAppts(ByVal FromDate As Date, ByVal ToDate As Date) As Appointment(
     Dim OutItems As Outlook.Items
     Dim OutItemsInDateRange As Outlook.Items
     Dim OutAppt As Outlook.AppointmentItem
-    Dim StrRestriction As String
+    Dim filter As String
     Dim OutApp As New Outlook.Application
 
-    'Construct filter for the next 30-day date range
-    StrRestriction = "[Start] >= '" & _
+    filter = "[Start] >= '" & _
         Format$(FromDate, "mm/dd/yyyy hh:mm AMPM") _
         & "' AND [End] <= '" & _
         Format$(ToDate, "mm/dd/yyyy hh:mm AMPM") & "'"
-    'Check the restriction string
-    Debug.Print StrRestriction
+    Debug.Print filter
 
     Set CalFolder = OutApp.Session.GetDefaultFolder(olFolderCalendar)
     Set OutItems = CalFolder.Items
     OutItems.IncludeRecurrences = True
     OutItems.Sort "[Start]"
-    'Restrict the Items collection for the 30-day date range
-    Set OutItemsInDateRange = OutItems.Restrict(StrRestriction)
-    'Construct filter for Subject containing 'team'
-    'Const PropTag  As String = "http://schemas.microsoft.com/mapi/proptag/"
-    'strRestriction = "@SQL=" & Chr(34) & PropTag _
-    '    & "0x0037001E" & Chr(34) & " like '%team%'"
-    ''Restrict the last set of filtered items for the subject
-    'Set oFinalItems = outItemsInDateRange.Restrict(strRestriction)
-    ''Sort and Debug.Print final results
-    'oFinalItems.Sort "[Start]"
+    Set OutItemsInDateRange = OutItems.Restrict(filter)
     Dim apptFactory  As Appointment: Set apptFactory = New Appointment
     Dim results() As Appointment, apptCount As Integer
     For Each OutAppt In OutItemsInDateRange

@@ -1,25 +1,27 @@
 Attribute VB_Name = "TimeSheet"
 Option Explicit
+
 Sub CmdTask(TaskName As Range)
-    Dim sel As Range, Cell As Range, r As Integer
-    Dim ClearedColor  As Long
-    ClearedColor = TaskName.Worksheet.Range("ClearTaskref").Interior.Color
+    Dim sel As Range, cell As Range, r As Integer
+    Dim SelectedColor As Long
+    Set sel = Application.Selection
+    SelectedColor = sel.Cells(1, 1).Interior.color
     Application.Calculation = xlCalculationManual
     Application.ScreenUpdating = False
-    Set sel = Application.Selection
-    If sel.Cells(1, 1).Interior.Color = ClearedColor And Not TaskName.Interior.Color = ClearedColor Then ' only fill-in gaps in the selection
-        For Each Cell In sel.Cells
-            If Cell.Interior.Color = ClearedColor Then
-                Cell.Interior.Color = TaskName.Interior.Color
-                Cell.Interior.Pattern = TaskName.Interior.Pattern
-                Cell.Font.Color = TaskName.Font.Color
-            End If
-        Next Cell
-    Else ' override whatever is selected
-        sel.Interior.Color = TaskName.Interior.Color
-        sel.Interior.Pattern = TaskName.Interior.Pattern
-        sel.Font.Color = TaskName.Font.Color
-    End If
+    Select Case sel.Cells(1, 1).Interior.color
+        Case TaskName.Interior.color ' override whatever is selected
+            sel.Interior.color = TaskName.Interior.color
+            sel.Interior.Pattern = TaskName.Interior.Pattern
+            sel.Font.color = TaskName.Font.color
+        Case SelectedColor ' only fill-in gaps in the selection
+            For Each cell In sel.Cells
+                If cell.Interior.color = SelectedColor Then
+                    cell.Interior.color = TaskName.Interior.color
+                    cell.Interior.Pattern = TaskName.Interior.Pattern
+                    cell.Font.color = TaskName.Font.color
+                End If
+            Next cell
+    End Select
     For r = 1 To sel.Rows.Count
         sel.Cells(r, 1).value = sel.Cells(r, 1).value
     Next r
@@ -42,14 +44,15 @@ Dim DayDate As Date
     SetSummary DayDate, "SummaryDay", ""
     SetSummary SummaryWeek, "SummaryWeek", "PieChartWeekly"
     SetSummary SummaryMonth, "SummaryMonth", "PieChartMonthly"
+    SetSummary SummaryMonth, "SummaryMonth", "PieChartYearly"
 End Sub
 Sub SetSummary(value As Variant, RangeName As String, PieChartName As String)
     If InputSheet.Range(RangeName).value <> value Then
         ' Debug.Print "SetSummary:" & RangeName, PieChartName, value
         InputSheet.Range(RangeName).value = value
         If PieChartName <> "" Then FormatPieChartByName PieChartName
-        If PieChartName = "SummaryMonth" Then
-            FormatPieChartByName "SummaryYear"
+        If PieChartName = "PieChartMonthly" Then
+            FormatPieChartByName "PieChartYearly"
         End If
     End If
 End Sub
@@ -100,6 +103,7 @@ Sub FormatPieChart(pieChart As Chart)
         .Solid
     End With
 
+    labels.Format.TextFrame2.TextRange.Font.Size = 7
 
     For Each ser In pieChart.SeriesCollection
 '         ser.ApplyDataLabels
@@ -130,29 +134,52 @@ Sub FormatPieChart(pieChart As Chart)
 End Sub
 
 Public Function CountColored(r As Range, ref As Range)
-Dim Cell As Range
-    For Each Cell In r
-        If Cell.Interior.Color = ref.Interior.Color Then CountColored = CountColored + 1
-    Next Cell
+Dim cell As Range
+    For Each cell In r
+        If cell.Interior.color = ref.Interior.color Then CountColored = CountColored + 1
+    Next cell
 End Function
-Public Function TimeRanges(r As Range, NoWorkRef As Range) As String
-Dim NoWorkColor As Long
+Public Function TimeRanges(rng As Range, WorkColorRef As Range) As String
+Static WorkColors() As Long
+Static inited As String
 Dim IsWork As Boolean
-Dim c As Integer
-    NoWorkColor = NoWorkRef.Interior.Color
-    For c = 1 To r.Columns.Count
-        Select Case r.Cells(1, c).Interior.Color
-            Case NoWorkColor
-                If IsWork Then
-                    TimeRanges = TimeRanges & "-" & Format((c - 1) / r.Columns.Count, "hh:mm")
-                    IsWork = False
+Dim r As Integer, c As Integer, i As Integer
+Dim cell As Range
+Dim color As Long: color = -1
+Dim cellColor As Long
+Dim isWorkColor As Boolean
+
+
+    If Not inited = WorkColorRef.Address Then
+        ReDim WorkColors(WorkColorRef.Rows.Count * WorkColorRef.Columns.Count - 1)
+        For Each cell In WorkColorRef
+            WorkColors(i) = cell.Interior.color
+            i = i + 1
+        Next cell
+        inited = WorkColorRef.Address
+    End If
+    
+    For c = 1 To rng.Columns.Count
+        cellColor = rng.Cells(1, c).Interior.color
+        If Not color = cellColor Then
+            color = cellColor
+            isWorkColor = False
+            For i = LBound(WorkColors) To UBound(WorkColors)
+                If color = WorkColors(i) Then
+                    isWorkColor = True
+                    ' Debug.Print c, color, isWorkColor, "HIT on color", i, WorkColors(i)
+                    Exit For
                 End If
-            Case Else
-                If Not IsWork Then
-                    TimeRanges = IIf(TimeRanges = "", "", TimeRanges & ", ") & Format((c - 1) / r.Columns.Count, "hh:mm")
-                    IsWork = True
-                End If
-        End Select
+            Next i
+            ' Debug.Print c, color, isWorkColor
+            If IsWork And Not isWorkColor Then
+                TimeRanges = TimeRanges & "-" & Format((c - 1) / rng.Columns.Count, "hh:mm")
+                IsWork = False
+            ElseIf Not IsWork And isWorkColor Then
+                TimeRanges = IIf(TimeRanges = "", "", TimeRanges & ", ") & Format((c - 1) / rng.Columns.Count, "hh:mm")
+                IsWork = True
+            End If
+        End If
     Next c
     If IsWork Then
       TimeRanges = TimeRanges & "-24:00"
@@ -171,65 +198,6 @@ End Function
 '    TaskList = b
 'End Function
 
-Public Function TextReport( _
-    DataRange As Range, _
-    PeriodRange As Range, _
-    PeriodValue As Variant, _
-    CategoryReferences As Range, _
-    Title As String, _
-    TimePerDay As Single, _
-    Optional WithDateRangeBounds As Boolean = False, _
-    Optional DatesRange As Range = Nothing, _
-    Optional AsArray As Boolean = False, _
-    Optional OrderBy As String = "", _
-    Optional ByWeekDay As Boolean = False, _
-    Optional RecurseLevels As Integer = 2 _
-) As String
-Dim r As Integer, c As Integer, CatCell As Range, DataCell As Range
-Dim Color As Long
-Dim ColorDic As Scripting.Dictionary
-Dim Category As Variant
-Dim txt As String
-Dim GlobalTaskTime As TaskTime
-Dim CurrentTaskTime As TaskTime
-On Error GoTo Err_Proc
-GoTo Proc
-Err_Proc:
-    If vbYes = MsgBox(Err.Description & vbCrLf & "Debug?", vbYesNo Or vbCritical, "Error") Then
-        Stop
-        Resume
-    End If
-    TextReport = Err.Description
-    Exit Function
-Proc:
-    Set ColorDic = New Scripting.Dictionary
-    Set GlobalTaskTime = New TaskTime
-    GlobalTaskTime.TaskName = Title
-    GlobalTaskTime.TimePerDay = TimePerDay
-    For Each CatCell In CategoryReferences
-      ColorDic.Add CatCell.Interior.Color, CatCell.value
-    Next CatCell
-    For r = 1 To PeriodRange.Rows.Count
-        If PeriodRange.Cells(r, 1).value = PeriodValue Then
-            For c = 1 To DataRange.Columns.Count
-                Set DataCell = DataRange.Cells(r, c)
-                Color = DataCell.Interior.Color
-                If ColorDic.Exists(Color) Then
-                    If DatesRange Is Nothing Then
-                        GlobalTaskTime.Increment SubTaskName:=ColorDic(Color), SubSubTaskName:=DataCell.value, RecurseLevels:=RecurseLevels, ByWeekDay:=ByWeekDay
-                    Else
-                        GlobalTaskTime.Increment SubTaskName:=ColorDic(Color), SubSubTaskName:=DataCell.value, RecurseLevels:=RecurseLevels, ByWeekDay:=ByWeekDay, TTime:=DatesRange.Cells(r, 1).value, WithDateRangeBounds:=WithDateRangeBounds
-                    End If
-                End If
-            Next c
-        End If
-      ' Debug.Print r
-    Next r
-    TextReport = GlobalTaskTime.ToString(WithDateRangeBounds, AsArray, OrderBy)
-
-    If TextReport = "" Then TextReport = "No data"
-End Function
-
 Function TryFillWithPreviousTask(rng As Range) As Boolean
     Static refColors As Variant
     If IsEmpty(refColors) Then
@@ -238,21 +206,21 @@ Function TryFillWithPreviousTask(rng As Range) As Boolean
         refColors = Array()
         ReDim refColors(1 To TasksRefFullRange.Rows.Count)
         For r = 1 To TasksRefFullRange.Rows.Count
-            refColors(r) = TasksRefFullRange.Cells(r, 1).Interior.Color
+            refColors(r) = TasksRefFullRange.Cells(r, 1).Interior.color
         Next r
     End If
     Dim c As Integer, cellColor As Long, taskColor As Long, i As Integer
-    cellColor = rng.Interior.Color
+    cellColor = rng.Interior.color
     If ArrayContains(refColors, cellColor) Then Exit Function
     c = -1
-    While rng.Offset(0, c).Interior.Color = cellColor
+    While rng.Offset(0, c).Interior.color = cellColor
         c = c - 1
     Wend
-    taskColor = rng.Offset(0, c).Interior.Color
+    taskColor = rng.Offset(0, c).Interior.color
     If Not ArrayContains(refColors, taskColor) Then Exit Function
     c = 0
-    While rng.Offset(0, c).Interior.Color = cellColor
-        rng.Offset(0, c).Interior.Color = taskColor
+    While rng.Offset(0, c).Interior.color = cellColor
+        rng.Offset(0, c).Interior.color = taskColor
         c = c - 1
     Wend
     TryFillWithPreviousTask = True
@@ -295,8 +263,9 @@ Public Sub ImportAppointments(day As Date)
     Set InputRange = InputSheet.Range("InputRange")
     Dim StartCell As Range
     Dim EndCell As Range
-    Dim Cell As Range
+    Dim cell As Range
     Dim TaskCell As Range
+    Dim tasks As String
     
     If Not RangeRelation(InputRange, Selection) = "Including" Then Exit Sub
     
@@ -305,24 +274,48 @@ Public Sub ImportAppointments(day As Date)
     If UBound(appts) < 0 Then Exit Sub
     If Err.Number <> 0 Then Exit Sub
     On Error GoTo 0
+    For Each cell In InputSheet.Range("TasksRefFullRange").Columns(2).Cells
+        tasks = IIf(tasks = "", "Tasks: ", tasks & ", ") & cell.value
+    Next cell
     
     For Each vappt In appts
         Set appt = vappt
-        Set StartCell = InputRange.Cells(1 + Selection.Row - InputRange.Row, appt.StartTick(1 / 4))
-        Set EndCell = InputRange.Cells(1 + Selection.Row - InputRange.Row, appt.EndTick(1 / 4))
-        If IsEmpty(StartCell.value) Then StartCell.value = appt.Subject
-        InputSheet.Range(StartCell, EndCell).Select
-        Set TaskCell = InputSheet.Range("DefaultAdminPattern")
-        For Each Cell In InputSheet.Range("TasksRefFullRange")
-            If InStr(1, appt.Subject, Cell.value, vbTextCompare) <> 0 Then
-                Set TaskCell = Cell
-                Exit For
+        If Not Left(appt.Subject, 8) = "Canceled" Then
+            Set StartCell = InputRange.Cells(1 + Selection.Row - InputRange.Row, appt.StartTick(1 / 4))
+            Set EndCell = InputRange.Cells(1 + Selection.Row - InputRange.Row, appt.EndTick(1 / 4))
+            InputSheet.Range(StartCell, EndCell).Select
+            Set TaskCell = Nothing
+            For Each cell In InputSheet.Range("TasksRefFullRange")
+                If InStr(1, appt.Subject, cell.value & ":", vbTextCompare) <> 0 _
+                Or InStr(1, cell.value & ":", appt.Subject, vbTextCompare) <> 0 Then
+                    Set TaskCell = cell
+                    Exit For
+                End If
+            Next cell
+            If TaskCell Is Nothing Then
+                Dim task As String: task = InputBox(appt.Subject & vbCrLf & "-------" & vbCrLf & tasks, "Please pick a task", "ADM")
+                If task <> "" Then
+                    For Each cell In InputSheet.Range("TasksRefFullRange").Cells
+                        Debug.Print task, cell.Address, cell.value, InStr(1, task, cell.value, vbTextCompare), InStr(1, cell.value, task, vbTextCompare)
+                        If InStr(1, task, cell.value, vbTextCompare) <> 0 _
+                        Or InStr(1, cell.value, task, vbTextCompare) <> 0 Then
+                            Set TaskCell = cell
+                            Exit For
+                        End If
+                    Next cell
+                    If TaskCell Is Nothing Then
+                        Set TaskCell = InputSheet.Range("DefaultAdminPattern")
+                    End If
+                End If
             End If
-        Next Cell
-        CmdTask TaskCell
-        Debug.Print appt.ToString(), appt.StartTick(1 / 4), appt.EndTick(1 / 4)
-    Next
-
+            If Not TaskCell Is Nothing Then
+                If IsEmpty(StartCell.value) Then StartCell.value = appt.Subject
+                CmdTask TaskCell
+                Selection.BorderAround XlLineStyle.xlDot, xlThick, color:=RGB(255, 0, 0)
+                Debug.Print appt.ToString(), appt.StartTick(1 / 4), appt.EndTick(1 / 4)
+            End If
+        End If
+    Next vappt
 End Sub
 Public Sub WorkReportStarter()
     Debug.Print WorkReport("MonthlyAggregates", "mmm-yy", "ADM", "Hol", "*")
@@ -355,7 +348,7 @@ Public Function WorkReport(PivotTableName As String, dateformat As String, Param
     DataRow(TotalCol) = "Total"
     DataRow(0) = CStr(Pivot.RowRange.Cells(1, 1).value)
     For cc = 0 To UBound(Categories)
-        DataRow(cc + 1) = IIf(CStr(Categories(cc)) = "*", "Other Work", CStr(Categories(cc)))
+        DataRow(cc + 1) = IIf(CStr(Categories(cc)) = "*", "Other", CStr(Categories(cc)))
     Next cc
     TotalDataRow(0) = "Total"
     For cc = 1 To TotalCol
